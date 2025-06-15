@@ -7,8 +7,6 @@ use App\Contracts\Services\AuthServiceInterface;
 use App\Exceptions\InternalServerErrorException;
 use App\Exceptions\InvalidCredentialsException;
 use Auth;
-use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Hash;
 
 readonly class AuthService implements AuthServiceInterface
@@ -20,42 +18,28 @@ readonly class AuthService implements AuthServiceInterface
     }
 
     /**
-     * @throws InternalServerErrorException
+     * @param array $userData
+     * @return array
      */
-    public function register(array $data): array
+    public function register(array $userData): array
     {
-        try {
-            $user = $this->userRepository->create($data);
-            $token = $user->createToken('token')->plainTextToken;
-        } catch (Exception $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        }
+        $user = $this->userRepository->store($userData);
+        $token = $user->createToken('token')->plainTextToken;
 
 
         return [
             'user' => $user,
             'token' => $token,
         ];
-
     }
 
     /**
-     * @throws InvalidCredentialsException
-     * @throws InternalServerErrorException
+     * @param array $credentials
+     * @return array
      */
     public function login(array $credentials): array
     {
-        try {
-            $user = $this->userRepository->findByEmail($credentials['email']);
-        } catch (ModelNotFoundException $e) {
-            throw new ModelNotFoundException($e->getMessage());
-        } catch (Exception $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        }
-
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
-            throw new InvalidCredentialsException();
-        }
+        $user = $this->userRepository->findByEmail($credentials['email']);
 
         $token = $user->createToken('token')->plainTextToken;
 
@@ -65,6 +49,9 @@ readonly class AuthService implements AuthServiceInterface
         ];
     }
 
+    /**
+     * @return void
+     */
     public function logout(): void
     {
         Auth::user()->tokens()->delete();

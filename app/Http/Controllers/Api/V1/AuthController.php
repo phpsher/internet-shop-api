@@ -3,14 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Contracts\Services\AuthServiceInterface;
-use App\Enums\HttpStatus;
-use App\Exceptions\InternalServerErrorException;
-use App\Exceptions\InvalidCredentialsException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginUserRequest;
 use App\Http\Requests\RegisterUserRequest;
 use App\Traits\ResponseTrait;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 
 
@@ -40,24 +36,7 @@ class AuthController extends Controller
 
     public function login(LoginUserRequest $request): JsonResponse
     {
-        try {
-            $user = $this->authService->login($request->validated());
-        } catch (ModelNotFoundException $e) {
-            return $this->error(
-                message: $e->getMessage(),
-                statusCode: HttpStatus::NOT_FOUND->value,
-            );
-        } catch (InternalServerErrorException $e) {
-            return $this->error(
-                message: $e->getMessage(),
-                statusCode: HttpStatus::INTERNAL_SERVER_ERROR->value,
-            );
-        } catch (InvalidCredentialsException $e) {
-            return $this->error(
-                message: $e->getMessage(),
-                statusCode: HttpStatus::UNAUTHORIZED->value,
-            );
-        }
+        $user = $this->authService->login($request->validated());
 
         return $this->success(
             message: 'Successfully login',

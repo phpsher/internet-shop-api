@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\V1\CartController;
+use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AuthController;
 
@@ -26,6 +26,13 @@ Route::prefix('v1')->group(function () {
         Route::post('/', [CartController::class, 'store']);
         Route::delete('/', [CartController::class, 'destroy']);
     });
+
+    Route::middleware('auth:sanctum')->prefix('orders')->group(function () {
+        Route::get('/', [OrderController::class, 'index']);
+        Route::get('/{orderId}', [OrderController::class, 'show']);
+        Route::post('/', [OrderController::class, 'store']);
+    });
+
 });
 
 Route::post('/protected-route', function () {

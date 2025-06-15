@@ -6,7 +6,7 @@ interface CartServiceInterface
 {
     public function getCart(string $cartKey): array;
 
-    public function saveProductToCart(array $data, string $cartKey): array;
+    public function addProductToCart(array $productsData, string $cartKey): array;
 
-    public function deleteProductFromCart(array $data, string $cartKey);
+    public function deleteProductFromCart(array $productsData, string $cartKey);
 }

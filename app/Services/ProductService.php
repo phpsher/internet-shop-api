@@ -7,7 +7,6 @@ use App\Contracts\Services\ProductServiceInterface;
 use App\Exceptions\InternalServerErrorException;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 readonly class ProductService implements ProductServiceInterface
 {
@@ -22,13 +21,7 @@ readonly class ProductService implements ProductServiceInterface
      */
     public function getProducts(): Collection
     {
-        try {
-            return $this->productRepository->all();
-        } catch (InternalServerErrorException $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        } catch (ModelNotFoundException $e) {
-            throw new ModelNotFoundException($e->getMessage());
-        }
+        return $this->productRepository->all();
     }
 
     /**
@@ -36,12 +29,6 @@ readonly class ProductService implements ProductServiceInterface
      */
     public function getProduct(int $id): Product
     {
-        try {
-            return $this->productRepository->find($id);
-        } catch (InternalServerErrorException $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        } catch (ModelNotFoundException $e) {
-            throw new ModelNotFoundException($e->getMessage());
-        }
+        return $this->productRepository->getById($id);
     }
 }

@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Contracts\Repositories\CartRepositoryInterface;
 use App\Contracts\Services\CartServiceInterface;
-use App\Exceptions\InternalServerErrorException;
 
 readonly class CartService implements CartServiceInterface
 {
@@ -16,54 +15,43 @@ readonly class CartService implements CartServiceInterface
     }
 
     /**
-     * @throws InternalServerErrorException
+     * @param string $cartKey
+     * @return array
      */
     public function getCart(string $cartKey): array
     {
-        try {
-            $cart = $this->cartRepository->getByKey($cartKey);
-        } catch (InternalServerErrorException $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        }
-
-        return $cart;
+        return $this->cartRepository->getByKey($cartKey);
     }
 
     /**
-     * @throws InternalServerErrorException
+     * @param array $productsData
+     * @param string $cartKey
+     * @return array
      */
-    public function saveProductToCart(array $data, string $cartKey): array
+    public function addProductToCart(array $productsData, string $cartKey): array
     {
-        $productId = $data['product_id'];
-        $quantity = $data['quantity'];
+        $productId = $productsData['product_id'];
+        $quantity = $productsData['quantity'];
 
-        try {
-            $cart = $this->cartRepository->create([
-                'product_id' => $productId,
-                'quantity' => $quantity,
-            ], $cartKey);
-        } catch (InternalServerErrorException $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        }
-
-        return $cart;
+        return $this->cartRepository->store([
+            'product_id' => $productId,
+            'quantity' => $quantity,
+        ], $cartKey);
     }
 
     /**
-     * @throws InternalServerErrorException
+     * @param array $productsData
+     * @param string $cartKey
+     * @return void
      */
-    public function deleteProductFromCart(array $data, string $cartKey): void
+    public function deleteProductFromCart(array $productsData, string $cartKey): void
     {
-        $productId = $data['product_id'];
-        $quantity = $data['quantity'];
+        $productId = $productsData['product_id'];
+        $quantity = $productsData['quantity'];
 
-        try {
-            $this->cartRepository->delete([
-                'product_id' => $productId,
-                'quantity' => $quantity,
-            ], $cartKey);
-        } catch (InternalServerErrorException $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        }
+        $this->cartRepository->delete([
+            'product_id' => $productId,
+            'quantity' => $quantity,
+        ], $cartKey);
     }
 }

@@ -3,39 +3,49 @@
 namespace App\Repositories;
 
 use App\Contracts\Repositories\ProductRepositoryInterface;
-use App\Exceptions\InternalServerErrorException;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Cache;
 
 readonly class ProductRepository implements ProductRepositoryInterface
 {
-
-
-    /**
-     * @throws InternalServerErrorException
-     */
-    public function all(): Collection
+    public function __construct(
+        private int $ttl = 3600 * 24 * 7,
+    )
     {
-        try {
-            return Product::all();
-        } catch (QueryException $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        }
     }
 
     /**
-     * @throws InternalServerErrorException
+     * @return Collection
      */
-    public function find(int $id): ?Product
+    public function all(): Collection
     {
-        try {
-            return Product::find($id);
-        } catch (QueryException $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        } catch (ModelNotFoundException $e) {
-            throw new ModelNotFoundException($e->getMessage());
-        }
+        return Cache::remember('products:all', $this->ttl, function () {
+            return Product::all();
+        });
+    }
+
+    /**
+     * @param int $productId
+     * @return Product|null
+     */
+    public function getById(int $productId): ?Product
+    {
+        return Cache::remember("posts:$productId", $this->ttl, function () use ($productId) {
+            return Product::find($productId);
+        });
+    }
+
+    /**
+     * @param array $productsIds
+     * @return Collection
+     */
+    public function getAllByIds(array $productsIds): Collection
+    {
+        $cacheKey = 'products_by_ids_' . implode('_', $productsIds);
+
+        return Cache::remember($cacheKey, now()->addMinutes(60), function () use ($productsIds) {
+            return Product::whereIn('id', $productsIds)->get()->keyBy('id');
+        });
     }
 }

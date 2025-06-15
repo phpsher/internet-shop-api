@@ -45,13 +45,13 @@ trait ResponseTrait
 
     protected function error(
         string $message = 'error',
-        mixed  $data = null,
+        mixed  $errors = null,
         int    $statusCode = 500
     ): JsonResponse
     {
         return response()->json([
             'message' => $message,
-            'data' => $data,
+            'errors' => $errors,
         ], $statusCode);
     }
 }

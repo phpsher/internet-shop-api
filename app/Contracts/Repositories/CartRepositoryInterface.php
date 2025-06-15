@@ -6,7 +6,7 @@ interface CartRepositoryInterface
 {
     public function getByKey(string $cartKey): array;
 
-    public function create(array $data, string $cartKey);
+    public function store(array $cartData, string $cartKey);
 
-    public function delete(array $data, string $cartKey);
+    public function delete(array $cartData, string $cartKey);
 }

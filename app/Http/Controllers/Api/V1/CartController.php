@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Contracts\Services\CartServiceInterface;
-use App\Enums\HttpStatus;
-use App\Exceptions\InternalServerErrorException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DestroyProductFromCartRequest;
 use App\Http\Requests\StoreProductToCartRequest;
@@ -20,43 +18,28 @@ class CartController extends Controller
 
     public function __construct(
         protected CartServiceInterface $cartService
-    ) {
+    )
+    {
         $this->cartKey = 'cart: ' . Auth::id();
     }
 
 
-
     public function index(): JsonResponse
     {
-        try {
-            $cart = $this->cartService->getCart($this->cartKey);
-        } catch (InternalServerErrorException $e) {
-            return $this->error(
-                message: $e->getMessage(),
-                statusCode: HttpStatus::INTERNAL_SERVER_ERROR->value,
-            );
-        }
+        $cart = $this->cartService->getCart($this->cartKey);
 
 
         return $this->success(
             data: $cart
         );
-
     }
 
     public function store(StoreProductToCartRequest $request): JsonResponse
     {
-        try {
-            $products = $this->cartService->saveProductToCart([
-                'product_id' => $request->input('product_id'),
-                'quantity' => $request->input('quantity'),
-            ], $this->cartKey);
-        } catch (InternalServerErrorException $e) {
-            return $this->error(
-                message: $e->getMessage(),
-                statusCode: HttpStatus::INTERNAL_SERVER_ERROR->value,
-            );
-        }
+        $products = $this->cartService->addProductToCart([
+            'product_id' => $request->input('product_id'),
+            'quantity' => $request->input('quantity'),
+        ], $this->cartKey);
 
 
         return $this->success(
@@ -73,17 +56,10 @@ class CartController extends Controller
         $productId = $request->input('product_id');
         $quantity = $request->input('quantity');
 
-        try {
-            $this->cartService->deleteProductFromCart([
-                'product_id' => $productId,
-                'quantity' => $quantity
-            ], $this->cartKey);
-        } catch (InternalServerErrorException $e) {
-            return $this->error(
-                message: $e->getMessage(),
-                statusCode: HttpStatus::INTERNAL_SERVER_ERROR->value,
-            );
-        }
+        $this->cartService->deleteProductFromCart([
+            'product_id' => $productId,
+            'quantity' => $quantity
+        ], $this->cartKey);
 
         return $this->success(
             message: 'Product removed from cart',

@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Contracts\Repositories\CartRepositoryInterface;
 use App\Exceptions\InternalServerErrorException;
-use Exception;
 use Illuminate\Support\Facades\Cache;
 
 readonly class CartRepository implements CartRepositoryInterface
@@ -18,36 +17,26 @@ readonly class CartRepository implements CartRepositoryInterface
     /**
      * @param string $cartKey
      * @return array
-     * @throws InternalServerErrorException
      */
 
     public function getByKey(string $cartKey): array
     {
-        try {
-            $cart = Cache::get($cartKey, []);
-        } catch (Exception $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        }
+        $cart = Cache::get($cartKey, []);
 
-            return $this->formatCart($cart);
+        return $this->formatCart($cart);
     }
 
     /**
-     * @param array $data
+     * @param array $cartData
      * @param string $cartKey
      * @return array
-     * @throws InternalServerErrorException
      */
-    public function create(array $data, string $cartKey): array
+    public function store(array $cartData, string $cartKey): array
     {
-        $productId = $data['product_id'];
-        $quantity = $data['quantity'];
+        $productId = $cartData['product_id'];
+        $quantity = $cartData['quantity'];
 
-        try {
-            $cart = Cache::get($cartKey, []);
-        } catch (Exception $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        }
+        $cart = Cache::get($cartKey, []);
 
         if (isset($cart[$productId])) {
             $cart[$productId] += $quantity;
@@ -55,43 +44,29 @@ readonly class CartRepository implements CartRepositoryInterface
             $cart[$productId] = $quantity;
         }
 
-        try {
-            Cache::put($cartKey, $cart, $this->ttl);
-        } catch (Exception $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        }
+        Cache::put($cartKey, $cart, $this->ttl);
 
 
         return $this->formatCart($cart);
     }
 
     /**
-     * @param array $data
+     * @param array $cartData
      * @param string $cartKey
      * @return void
-     * @throws InternalServerErrorException
      */
-    public function delete(array $data, string $cartKey): void
+    public function delete(array $cartData, string $cartKey): void
     {
-        $productId = $data['product_id'];
+        $productId = $cartData['product_id'];
 
-        try {
-            $cart = Cache::get($cartKey, []);
-        } catch (Exception $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        }
+        $cart = Cache::get($cartKey, []);
 
         if (isset($cart[$productId])) {
             unset($cart[$productId]);
         }
 
-        try {
-            Cache::put($cartKey, $cart, $this->ttl);
-        } catch (Exception $e) {
-            throw new InternalServerErrorException($e->getMessage());
-        }
+        Cache::put($cartKey, $cart, $this->ttl);
     }
-
 
     /**
      * @param array $cart

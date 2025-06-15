@@ -9,5 +9,7 @@ interface ProductRepositoryInterface
 {
     public function all(): Collection;
 
-    public function find(int $id): ?Product;
+    public function getById(int $productId): ?Product;
+
+    public function getAllByIds(array $productsIds): Collection;
 }

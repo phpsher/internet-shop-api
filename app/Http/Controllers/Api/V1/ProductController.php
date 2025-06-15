@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Contracts\Services\ProductServiceInterface;
-use App\Exceptions\InternalServerErrorException;
 use App\Http\Controllers\Controller;
-use App\Models\Product;
 use App\Traits\ResponseTrait;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 
 class ProductController extends Controller
@@ -22,17 +19,7 @@ class ProductController extends Controller
 
     public function index(): JsonResponse
     {
-        try {
-            $products = $this->productService->getProducts();
-        } catch (InternalServerErrorException $e) {
-            return $this->error(
-                message: $e->getMessage()
-            );
-        } catch (ModelNotFoundException $e) {
-            return $this->error(
-                message: 'Products not found'
-            );
-        }
+        $products = $this->productService->getProducts();
         return $this->success(
             data: $products
         );
@@ -40,12 +27,7 @@ class ProductController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $product = Product::find($id);
-        if (!$product) {
-            return $this->error(
-                message: 'Product not found',
-            );
-        }
+        $product = $this->productService->getProduct($id);
 
         return $this->success(
             data: $product
