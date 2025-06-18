@@ -5,16 +5,28 @@ namespace App\Repositories;
 use App\Contracts\Repositories\OrderRepositoryInterface;
 use App\Models\Order;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 readonly class OrderRepository implements OrderRepositoryInterface
 {
+    private int $ttl;
+
+    public function __construct()
+    {
+        $this->ttl  = 3600 * 24 * 7;
+    }
+
     /**
      * @param int $userId
      * @return Collection
      */
     public function all(int $userId): Collection
     {
-        return Order::with('products')->get();
+        return Cache::remember('orders:all', $this->ttl, function () use ($userId) {
+            return Order::with('products')
+                ->where('user_id', $userId)
+                ->get();
+        });
     }
 
     /**
@@ -24,10 +36,13 @@ readonly class OrderRepository implements OrderRepositoryInterface
      */
     public function getById(int $userId, int $orderId): ?Order
     {
-        return Order::with('products')
-            ->where('id', $orderId)
-            ->where('user_id', $userId)
-            ->first();
+        return Cache::remember("orders:user:$userId:order:$orderId", $this->ttl, function () use ($userId, $orderId) {
+            return Order::with('products')
+                ->where('id', $orderId)
+                ->where('user_id', $userId)
+                ->first();
+        });
+
     }
 
     /**
@@ -36,6 +51,10 @@ readonly class OrderRepository implements OrderRepositoryInterface
      */
     public function store(array $orderData): Order
     {
-        return Order::create($orderData);
+        $order = Order::create($orderData);
+
+        Cache::put("order:$order->id", $order, $this->ttl);
+
+        return $order;
     }
 }

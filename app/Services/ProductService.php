@@ -16,17 +16,13 @@ readonly class ProductService implements ProductServiceInterface
     {
     }
 
-    /**
-     * @throws InternalServerErrorException
-     */
+
     public function getProducts(): Collection
     {
         return $this->productRepository->all();
     }
 
-    /**
-     * @throws InternalServerErrorException
-     */
+
     public function getProduct(int $id): Product
     {
         return $this->productRepository->getById($id);
