@@ -16,13 +16,20 @@ readonly class OrderRepository implements OrderRepositoryInterface
         $this->ttl  = 3600 * 24 * 7;
     }
 
+    public function all(): Collection
+    {
+        return Cache::remember('orders:all', $this->ttl, function () {
+            return Order::paginate(10);
+        });
+    }
+
     /**
      * @param int $userId
      * @return Collection
      */
-    public function all(int $userId): Collection
+    public function allUserOrders(int $userId): Collection
     {
-        return Cache::remember('orders:all', $this->ttl, function () use ($userId) {
+        return Cache::remember('orders:user:orders', $this->ttl, function () use ($userId) {
             return Order::with('products')
                 ->where('user_id', $userId)
                 ->get();
