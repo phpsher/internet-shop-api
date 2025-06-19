@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface OrderServiceInterface
 {
-    public function getOrders(int $userId): Collection;
+    public function getOrders(): Collection;
+    public function getUserOrders(int $userId): Collection;
 
 
     public function getOrder(int $userId, int $orderId): Order;
