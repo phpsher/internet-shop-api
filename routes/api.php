@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\AdminController;
+use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -33,10 +35,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/', [OrderController::class, 'store']);
     });
 
+    Route::middleware(['auth:sanctum', AdminMiddleware::class])->prefix('admin')->group(function () {
+        Route::get('/products', [AdminController::class, 'allProducts']);
+        Route::get('/products/{productId}', [AdminController::class, 'showProduct']);
+        Route::get('/orders', [AdminController::class, 'allOrders']);
+        Route::get('/users/{user_id}/orders', [AdminController::class, 'allUserOrders']);
+        Route::get('/users/{user_id}/orders/{orderId}', [AdminController::class, 'showOrder']);
+    });
 });
-
-Route::post('/protected-route', function () {
-    return response()->json('Complete');
-})->middleware('auth:sanctum');
-
-
