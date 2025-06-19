@@ -19,9 +19,14 @@ readonly class OrderService implements OrderServiceInterface
     {
     }
 
-    public function getOrders(int $userId): Collection
+    public function getOrders(): Collection
     {
-        return $this->orderRepository->all($userId);
+        return $this->orderRepository->all();
+    }
+
+    public function getUserOrders(int $userId): Collection
+    {
+        return $this->orderRepository->allUserOrders($userId);
     }
 
     public function getOrder(int $userId, int $orderId): Order
