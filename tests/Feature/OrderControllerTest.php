@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -11,7 +12,18 @@ use Tests\TestCase;
 class OrderControllerTest extends TestCase
 {
     use RefreshDatabase;
+    protected function setUp(): void
+    {
+        parent::setUp();
 
+        Role::factory()->create([
+            'role' => 'user'
+        ]);
+
+        Role::factory()->create([
+            'role' => 'admin'
+        ]);
+    }
     public function test_can_user_get_all_orders()
     {
         $user = User::factory()->create();

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -11,6 +12,20 @@ class AuthControllerTest extends TestCase
 {
 
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Role::factory()->create([
+            'id' => 1,
+            'role' => 'user'
+        ]);
+
+        Role::factory()->create([
+            'role' => 'admin'
+        ]);
+    }
 
     public function test_can_user_register_and_access_protected_route()
     {
