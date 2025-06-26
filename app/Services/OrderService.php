@@ -8,6 +8,7 @@ use App\Contracts\Services\OrderServiceInterface;
 use App\Models\Order;
 use DB;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Throwable;
 
 readonly class OrderService implements OrderServiceInterface
@@ -19,7 +20,7 @@ readonly class OrderService implements OrderServiceInterface
     {
     }
 
-    public function getOrders(): Collection
+    public function getOrders(): LengthAwarePaginator
     {
         return $this->orderRepository->all();
     }

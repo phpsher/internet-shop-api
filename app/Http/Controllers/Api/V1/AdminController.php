@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Contracts\Services\OrderServiceInterface;
 use App\Contracts\Services\ProductServiceInterface;
+use App\Contracts\Services\StatisticsServiceInterface;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\ShowOrderRequest;
 use App\Traits\ResponseTrait;
 use Illuminate\Http\JsonResponse;
@@ -13,18 +15,23 @@ class AdminController extends Controller
     use ResponseTrait;
 
     public function __construct(
-        private readonly ProductServiceInterface $productService,
-        private readonly OrderServiceInterface   $orderService,
+        private readonly ProductServiceInterface    $productService,
+        private readonly OrderServiceInterface      $orderService,
+        private readonly StatisticsServiceInterface $statisticsService
     )
     {
     }
 
-    public function allProducts(): JsonResponse
+    public function dashboard(): JsonResponse
     {
-        $products = $this->productService->getProducts();
+        $allProducts = $this->productService->getProducts();
+        $allOrders = $this->orderService->getOrders();
 
         return $this->success(
-            data: $products
+            data: [
+                'products' => $allProducts,
+                'orders' => $allOrders
+            ]
         );
     }
 
@@ -34,15 +41,6 @@ class AdminController extends Controller
 
         return $this->success(
             data: $product
-        );
-    }
-
-    public function allOrders(): JsonResponse
-    {
-        $orders = $this->orderService->getOrders();
-
-        return $this->success(
-            data: $orders
         );
     }
 
@@ -64,4 +62,15 @@ class AdminController extends Controller
         );
     }
 
+    public function statistics(): JsonResponse
+    {
+        return $this->success(
+            data: [
+                'order' => $this->statisticsService->getOrderStatistics(),
+                'product' => $this->statisticsService->getProductStatistics(),
+            ]
+        );
+    }
+
 }
+

@@ -3,69 +3,73 @@
 namespace App\Repositories;
 
 use App\Contracts\Repositories\CartRepositoryInterface;
+use App\Exceptions\CacheException;
 use App\Exceptions\InternalServerErrorException;
 use Illuminate\Support\Facades\Cache;
 
-readonly class CartRepository implements CartRepositoryInterface
+class CartRepository extends BaseRepository implements CartRepositoryInterface
 {
-    public function __construct(
-        private int $ttl = 3600 * 24 * 7,
-    )
-    {
-    }
-
     /**
      * @param string $cartKey
      * @return array
+     * @throws InternalServerErrorException
      */
-
     public function getByKey(string $cartKey): array
     {
-        $cart = Cache::get($cartKey, []);
-
-        return $this->formatCart($cart);
+        return $this->safe(function () use ($cartKey) {
+            return $this->formatCart(Cache::get($cartKey, []));
+        });
     }
 
     /**
      * @param array $cartData
      * @param string $cartKey
      * @return array
+     * @throws CacheException|InternalServerErrorException
      */
     public function store(array $cartData, string $cartKey): array
     {
         $productId = $cartData['product_id'];
         $quantity = $cartData['quantity'];
 
-        $cart = Cache::get($cartKey, []);
+        return $this->safe(function () use ($cartKey, $productId, $quantity) {
+            $cart = Cache::get($cartKey, []);
 
-        if (isset($cart[$productId])) {
-            $cart[$productId] += $quantity;
-        } else {
-            $cart[$productId] = $quantity;
-        }
+            if (isset($cart[$productId])) {
+                $cart[$productId] += $quantity;
+            } else {
+                $cart[$productId] = $quantity;
+            }
 
-        Cache::put($cartKey, $cart, $this->ttl);
+            if (!Cache::put($cartKey, $cart, $this->ttl)) {
+                throw new CacheException();
+            }
 
-
-        return $this->formatCart($cart);
+            return $this->formatCart($cart);
+        });
     }
 
     /**
      * @param array $cartData
      * @param string $cartKey
      * @return void
+     * @throws CacheException|InternalServerErrorException
      */
     public function delete(array $cartData, string $cartKey): void
     {
         $productId = $cartData['product_id'];
 
-        $cart = Cache::get($cartKey, []);
+        $this->safe(function () use ($cartKey, $productId) {
+            $cart = Cache::get($cartKey, []);
 
-        if (isset($cart[$productId])) {
-            unset($cart[$productId]);
-        }
+            if (isset($cart[$productId])) {
+                unset($cart[$productId]);
+            }
 
-        Cache::put($cartKey, $cart, $this->ttl);
+            if (!Cache::put($cartKey, $cart, $this->ttl)) {
+                throw new CacheException('Error deleting product from cart');
+            }
+        });
     }
 
     /**
@@ -74,11 +78,13 @@ readonly class CartRepository implements CartRepositoryInterface
      */
     private function formatCart(array $cart): array
     {
-        return array_map(function ($prodId, $qty) {
-            return [
-                'product_id' => (int)$prodId,
-                'quantity' => (int)$qty,
+        $formatted = [];
+        foreach ($cart as $productId => $quantity) {
+            $formatted[] = [
+                'product_id' => (int) $productId,
+                'quantity' => (int) $quantity,
             ];
-        }, array_keys($cart), $cart);
+        }
+        return $formatted;
     }
 }

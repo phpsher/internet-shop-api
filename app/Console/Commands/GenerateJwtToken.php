@@ -2,10 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Role;
 use App\Models\User;
-use Faker\Factory as Faker;
 use Illuminate\Console\Command;
-
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 class GenerateJwtToken extends Command
 {
     /**
@@ -13,31 +14,52 @@ class GenerateJwtToken extends Command
      *
      * @var string
      */
-    protected $signature = 'jwt:generate';
+    protected $signature = 'jwt:generate {email?} {password?}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Generate JWT token';
+    protected $description = 'Generate JWT token for admin user';
 
     /**
      * Execute the console command.
      */
     public function handle(): void
     {
-        $user = [
-            'name' => 'John Doe',
-            'email' => Faker::create()->email(),
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ];
+        $email = $this->argument('email') ?? 'admin@example.com';
+        $password = $this->argument('password') ?? 'admin123';
 
+        try {
+            DB::beginTransaction();
 
-        $token = User::create($user)->createToken('token')->plainTextToken;
+            // Check if admin role exists, create if not
+            $role = Role::firstOrCreate(
+                ['role' => 'admin']
+            );
 
+            // Create admin user
+            $user = new User();
+            $user->email = $email;
+            $user->name = 'Admin';
+            $user->password = Hash::make($password);
+            $user->role_id = $role->id;
+            $user->save();
 
-        $this->info("Your token: $token");
+            // Generate new token
+            $token = $user->createToken('admin-token')->plainTextToken;
+
+            DB::commit();
+
+            $this->info('Admin user created successfully');
+            $this->info("Email: $email");
+            $this->info("Password: $password");
+            $this->info("Token: $token");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->error('Failed to create admin user: ' . $e->getMessage());
+        }
     }
 }

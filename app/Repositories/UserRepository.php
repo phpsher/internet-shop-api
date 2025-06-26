@@ -3,39 +3,40 @@
 namespace App\Repositories;
 
 use App\Contracts\Repositories\UserRepositoryInterface;
+use App\Exceptions\InternalServerErrorException;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 
-readonly class UserRepository implements UserRepositoryInterface
+class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
-    private int $ttl;
-
-    public function __construct()
-    {
-        $this->ttl = 3600 * 24 * 7;
-    }
 
     /**
      * @param array $userData
      * @return User
+     * @throws InternalServerErrorException
      */
     public function store(array $userData): User
     {
-        $user = User::create($userData);
+        return $this->safe(function () use ($userData) {
+            $user = User::create($userData);
 
-        Cache::put("user:$user->id", $user, $this->ttl);
+            Cache::put("user:$user->id", $user, $this->ttl);
 
-        return $user;
+            return $user;
+        });
     }
 
     /**
      * @param string $email
      * @return User|null
+     * @throws InternalServerErrorException
      */
     public function findByEmail(string $email): ?User
     {
-        return Cache::remember('user:email:' . $email, $this->ttl, function () use ($email) {
-           return User::where('email', $email)->first();
+        return $this->safe(function () use ($email) {
+            return Cache::remember('user:email:' . $email, $this->ttl, function () use ($email) {
+                return User::where('email', $email)->first();
+            });
         });
     }
 }

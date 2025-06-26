@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Product;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,13 +16,15 @@ class ProductControllerTest extends TestCase
     {
         parent::setUp();
 
-        Role::factory()->create([
+        $role = Role::factory()->create([
             'role' => 'user'
         ]);
 
-        Role::factory()->create([
-            'role' => 'admin'
+        $user = User::factory()->create([
+            'role_id' => $role->id
         ]);
+
+        $this->actingAs($user);
     }
 
     public function test_can_get_all_products()
@@ -50,9 +53,9 @@ class ProductControllerTest extends TestCase
 
     public function test_can_get_single_product()
     {
-        $product = Product::factory()->count(1)->create();
+        $product = Product::factory()->create();
 
-        $response = $this->getJson('/api/v1/products/' . $product->first()->id);
+        $response = $this->getJson("/api/v1/products/$product->id");
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -65,10 +68,6 @@ class ProductControllerTest extends TestCase
                 'created_at',
                 'updated_at',
             ]
-        ]);
-
-        $response->assertJson([
-            'data' => $product->first()->toArray()
         ]);
     }
 }

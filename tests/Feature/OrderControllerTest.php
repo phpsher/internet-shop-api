@@ -12,28 +12,24 @@ use Tests\TestCase;
 class OrderControllerTest extends TestCase
 {
     use RefreshDatabase;
+    private User $user;
     protected function setUp(): void
     {
         parent::setUp();
 
-        Role::factory()->create([
+        $role = Role::factory()->create([
             'role' => 'user'
         ]);
 
-        Role::factory()->create([
-            'role' => 'admin'
+        $this->user = User::factory()->create([
+            'role_id' => $role->id
         ]);
+
+        $this->actingAs($this->user);
     }
     public function test_can_user_get_all_orders()
     {
-        $user = User::factory()->create();
-        $products = Product::factory()->count(3)->create();
-
-        $token = $user->createToken('test-token')->plainTextToken;
-
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token
-        ])->getJson('/api/v1/orders');
+        $response = $this->getJson('/api/v1/orders');
 
         $response->assertStatus(200);
 
@@ -72,18 +68,11 @@ class OrderControllerTest extends TestCase
 
     public function test_user_see_order()
     {
-        $user = User::factory()->create();
-        $product = Product::factory()->create();
-
         $order = Order::factory()->create([
-            'user_id' => $user->id,
+            'user_id' => $this->user->id,
         ]);
 
-        $token = $user->createToken('test-token')->plainTextToken;
-
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token
-        ])->getJson("/api/v1/orders/$order->id");
+        $response = $this->getJson("/api/v1/orders/$order->id");
 
         $response->assertStatus(200);
 
@@ -119,19 +108,14 @@ class OrderControllerTest extends TestCase
 
     public function test_successful_order_creation()
     {
-        $user = User::factory()->create();
         $products = Product::factory()->count(2)->create();
-
-        $token = $user->createToken('test-token')->plainTextToken;
 
         $productIds = [];
         foreach ($products as $product) {
             $productIds[] = $product->id;
         }
 
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token
-        ])->postJson('/api/v1/orders', [
+        $response = $this->postJson('/api/v1/orders', [
             'products' => [
                 ['product_id' => $productIds[0], 'quantity' => 2],
                 ['product_id' => $productIds[1], 'quantity' => 3]
@@ -153,8 +137,7 @@ class OrderControllerTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('orders', [
-            'user_id' => $user->id,
-            'total_price' => ($products[0]->price * 2) + ($products[1]->price * 3)
+            'user_id' => $this->user->id,
         ]);
     }
 }

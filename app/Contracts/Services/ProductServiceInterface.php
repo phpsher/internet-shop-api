@@ -9,5 +9,7 @@ interface ProductServiceInterface
 {
     public function getProducts(): Collection;
 
-    public function getProduct(int $id): Product;
+    public function getProduct(int $id): ?Product;
+
+    // TODO... public function storeProduct(array $productData): Product;
 }

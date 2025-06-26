@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Order;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -14,10 +15,15 @@ class OrderFactory extends Factory
      *
      * @return array<string, mixed>
      */
+
+    protected $model = Order::class;
+
     public function definition(): array
     {
         return [
+            'user_id' => $this->faker->numberBetween(1, 10),
             'total_price' => $this->faker->numberBetween(1, 10),
+            'status' => $this->faker->randomElement(['pending', 'completed', 'cancelled'])
         ];
     }
 }

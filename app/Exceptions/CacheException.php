@@ -9,7 +9,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
-class InternalServerErrorException extends Exception
+class CacheException extends Exception
 {
     use ResponseTrait;
 
@@ -23,7 +23,7 @@ class InternalServerErrorException extends Exception
             $this->getMessage()
         );
 
-        Log::error('InternalServerErrorException', (array) $exceptionMessage);
+        Log::error('CacheException', (array) $exceptionMessage);
         SendLogJob::dispatch($exceptionMessage, TelegramLoggerService::class);
     }
 

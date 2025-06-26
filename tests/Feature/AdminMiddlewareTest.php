@@ -11,11 +11,11 @@ class AdminMiddlewareTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $adminUser;
-    protected Role $adminRole;
+    private User $adminUser;
+    private Role $adminRole;
 
-    protected User $user;
-    protected Role $userRole;
+    private User $user;
+    private Role $userRole;
 
     protected function setUp(): void
     {
@@ -40,7 +40,7 @@ class AdminMiddlewareTest extends TestCase
     {
         $this->actingAs($this->adminUser);
 
-        $response = $this->get('api/protected-route-admin');
+        $response = $this->get('api/v1/protected-route-admin');
 
         $response->assertStatus(200);
     }
@@ -49,7 +49,7 @@ class AdminMiddlewareTest extends TestCase
     {
         $this->actingAs($this->user);
 
-        $response = $this->get('api/protected-route-admin');
+        $response = $this->get('api/v1/protected-route-admin');
 
         $response->assertStatus(401);
     }

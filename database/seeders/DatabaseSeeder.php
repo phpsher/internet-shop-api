@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\User;
@@ -15,9 +16,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
         Role::factory()->create(['role' => 'user']);
         Role::factory()->create(['role' => 'admin']);
+        User::factory()->count(20)->create();
         Product::factory()->count(10)->create();
+        Order::factory()->count(10)->create();
     }
 }

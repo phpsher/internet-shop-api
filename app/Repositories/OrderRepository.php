@@ -3,36 +3,41 @@
 namespace App\Repositories;
 
 use App\Contracts\Repositories\OrderRepositoryInterface;
+use App\Exceptions\CacheException;
+use App\Exceptions\InternalServerErrorException;
 use App\Models\Order;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 
-readonly class OrderRepository implements OrderRepositoryInterface
+class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 {
-    private int $ttl;
-
-    public function __construct()
+    /**
+     * @throws InternalServerErrorException
+     */
+    public function all(): LengthAwarePaginator
     {
-        $this->ttl  = 3600 * 24 * 7;
-    }
-
-    public function all(): Collection
-    {
-        return Cache::remember('orders:all', $this->ttl, function () {
-            return Order::paginate(10);
+        return $this->safe(function () {
+            return Cache::remember('orders:all', $this->ttl, function () {
+                return Order::paginate(10);
+            });
         });
+
     }
 
     /**
      * @param int $userId
      * @return Collection
+     * @throws InternalServerErrorException
      */
     public function allUserOrders(int $userId): Collection
     {
-        return Cache::remember('orders:user:orders', $this->ttl, function () use ($userId) {
-            return Order::with('products')
-                ->where('user_id', $userId)
-                ->get();
+        return $this->safe(function () use ($userId) {
+            return Cache::remember("orders:user:orders:$userId", $this->ttl, function () use ($userId) {
+                return Order::with('products')
+                    ->where('user_id', $userId)
+                    ->get();
+            });
         });
     }
 
@@ -40,28 +45,36 @@ readonly class OrderRepository implements OrderRepositoryInterface
      * @param int $userId
      * @param int $orderId
      * @return Order|null
+     * @throws InternalServerErrorException
      */
     public function getById(int $userId, int $orderId): ?Order
     {
-        return Cache::remember("orders:user:$userId:order:$orderId", $this->ttl, function () use ($userId, $orderId) {
-            return Order::with('products')
-                ->where('id', $orderId)
-                ->where('user_id', $userId)
-                ->first();
+        return $this->safe(function () use ($userId, $orderId) {
+            return Cache::remember("orders:user:$userId:order:$orderId", $this->ttl, function () use ($userId, $orderId) {
+                return Order::with('products')
+                    ->where('id', $orderId)
+                    ->where('user_id', $userId)
+                    ->first();
+            });
         });
-
     }
 
     /**
      * @param array $orderData
      * @return Order
+     * @throws InternalServerErrorException
      */
     public function store(array $orderData): Order
     {
-        $order = Order::create($orderData);
+        return $this->safe(function () use ($orderData) {
+            $order = Order::create($orderData);
 
-        Cache::put("order:$order->id", $order, $this->ttl);
 
-        return $order;
+            if(!Cache::put("order:$order->id", $order, $this->ttl)) {
+                throw new CacheException('Error storing order in cache');
+            }
+
+            return $order;
+        });
     }
 }

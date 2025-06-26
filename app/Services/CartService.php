@@ -20,6 +20,7 @@ readonly class CartService implements CartServiceInterface
      */
     public function getCart(string $cartKey): array
     {
+
         return $this->cartRepository->getByKey($cartKey);
     }
 

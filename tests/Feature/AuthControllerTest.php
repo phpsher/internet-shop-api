@@ -29,7 +29,7 @@ class AuthControllerTest extends TestCase
 
     public function test_can_user_register_and_access_protected_route()
     {
-        $response = $this->postJson('api/v1/register', [
+        $response = $this->postJson('/api/v1/register', [
             'name' => 'John Doe',
             'email' => 'TJr1o@example.com',
             'password' => 'password11',
@@ -43,7 +43,7 @@ class AuthControllerTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $token
-        ])->postJson('/api/protected-route');
+        ])->getJson('/api/v1/protected-route');
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('users', [
@@ -55,7 +55,7 @@ class AuthControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->postJson('api/v1/login', [
+        $response = $this->postJson('/api/v1/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
@@ -67,7 +67,7 @@ class AuthControllerTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $token
-        ])->postJson('/api/protected-route');
+        ])->getJson('/api/v1/protected-route');
 
         $response->assertStatus(200);
     }
