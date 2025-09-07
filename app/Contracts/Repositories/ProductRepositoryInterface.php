@@ -4,10 +4,11 @@ namespace App\Contracts\Repositories;
 
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 interface ProductRepositoryInterface
 {
-    public function all(): Collection;
+    public function all(): LengthAwarePaginator;
 
     public function getById(int $productId): ?Product;
 

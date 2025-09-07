@@ -15,7 +15,7 @@ class SendLogJob implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        private readonly mixed                  $logData,
+        private readonly mixed  $logData,
         private readonly string $logger,
     )
     {

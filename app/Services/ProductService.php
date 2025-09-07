@@ -6,6 +6,7 @@ use App\Contracts\Repositories\ProductRepositoryInterface;
 use App\Contracts\Services\ProductServiceInterface;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 readonly class ProductService implements ProductServiceInterface
 {
@@ -16,37 +17,29 @@ readonly class ProductService implements ProductServiceInterface
     }
 
 
-    public function getProducts(): Collection
+    public function getProducts(): LengthAwarePaginator
     {
-        try {
-            return $this->productRepository->all();
-        } catch (\Exception $e) {
-            return new Collection();
-        }
+        return $this->productRepository->all();
     }
 
 
     public function getProduct(int $id): ?Product
     {
-        try {
-            return $this->productRepository->getById($id);
-        } catch (\Exception $e) {
-            return null;
-        }
+        return $this->productRepository->getById($id);
     }
 
-/*    public function storeProduct(array $productData): Product
-    {
-        // TODO...
-        $relativePath = $productData['image']->store('public/products');
+    /*    public function storeProduct(array $productData): Product
+        {
+            // TODO...
+            $relativePath = $productData['image']->store('public/products');
 
-        $publicUrl = Storage::url($relativePath);
+            $publicUrl = Storage::url($relativePath);
 
-        $productData['image_path'] = $relativePath;
+            $productData['image_path'] = $relativePath;
 
-        $productData['image'] = $publicUrl;
+            $productData['image'] = $publicUrl;
 
-        return $this->productRepository->storeProduct($productData);
-    }*/
+            return $this->productRepository->storeProduct($productData);
+        }*/
 
 }

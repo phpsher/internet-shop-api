@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class OrderControllerTest extends TestCase
@@ -16,6 +17,8 @@ class OrderControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Cache::flush();
 
         $role = Role::factory()->create([
             'role' => 'user'
@@ -66,7 +69,7 @@ class OrderControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_see_order()
+    public function test_can_user_see_order()
     {
         $order = Order::factory()->create([
             'user_id' => $this->user->id,

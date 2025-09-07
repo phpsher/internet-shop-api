@@ -2,11 +2,14 @@
 
 namespace App\Contracts\Services;
 
+use App\DTO\AddProductToCartDTO;
+use App\DTO\DestroyProductFromCartDTO;
+
 interface CartServiceInterface
 {
     public function getCart(string $cartKey): array;
 
-    public function addProductToCart(array $productsData, string $cartKey): array;
+    public function addProductToCart(AddProductToCartDTO $DTO): array;
 
-    public function deleteProductFromCart(array $productsData, string $cartKey): void;
+    public function deleteProductFromCart(DestroyProductFromCartDTO $DTO): void;
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Contracts\Services\CartServiceInterface;
 use App\Contracts\Services\OrderServiceInterface;
+use App\DTO\StoreOrderDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOrderRequest;
 use App\Traits\ResponseTrait;
@@ -26,16 +27,16 @@ class OrderController extends Controller
 
     public function index(): JsonResponse
     {
-        $orders = $this->orderService->getOrders(Auth::id());
+        $orders = $this->orderService->getOrders();
 
         return $this->success(
             data: $orders
         );
     }
 
-    public function show(int $orderId): JsonResponse
+    public function show(string $orderId): JsonResponse
     {
-        $order = $this->orderService->getOrder(Auth::id(), $orderId);
+        $order = $this->orderService->getOrder($orderId);
 
         return $this->success(
             data: $order
@@ -45,7 +46,12 @@ class OrderController extends Controller
     // Метод для создания заказа
     public function store(StoreOrderRequest $request): JsonResponse
     {
-        $order = $this->orderService->storeOrder(Auth::id(), $request->input('products'));
+        $order = $this->orderService->storeOrder(
+            new StoreOrderDTO(
+                userId: Auth::id(),
+                products: $request->input('products', []),
+            )
+        );
 
         return $this->success(
             message: 'Order created',

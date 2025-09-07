@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Contracts\Repositories\UserRepositoryInterface;
+use App\DTO\RegisterUserDTO;
 use App\Exceptions\InternalServerErrorException;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
@@ -11,16 +12,17 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
 
     /**
-     * @param array $userData
+     * @param RegisterUserDTO $DTO
      * @return User
      * @throws InternalServerErrorException
      */
-    public function store(array $userData): User
+    public function store(RegisterUserDTO $DTO): User
     {
-        return $this->safe(function () use ($userData) {
-            $user = User::create($userData);
+        return $this->safe(function () use ($DTO) {
+            $user = User::create($DTO->toArray());
 
-            Cache::put("user:$user->id", $user, $this->ttl);
+            // Кэширую именно email т.к. есть метод findByEmail
+            Cache::put("user:email:$user->email", $user, $this->ttl);
 
             return $user;
         });
@@ -35,7 +37,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     {
         return $this->safe(function () use ($email) {
             return Cache::remember('user:email:' . $email, $this->ttl, function () use ($email) {
-                return User::where('email', $email)->first();
+                return User::where('email', $email)->firstOrFail();
             });
         });
     }

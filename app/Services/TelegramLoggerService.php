@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Contracts\Services\LoggerServiceInterface;
-use Http;
-use Log;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 readonly class TelegramLoggerService implements LoggerServiceInterface

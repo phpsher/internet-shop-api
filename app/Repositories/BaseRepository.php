@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Exceptions\CacheException;
 use App\Exceptions\InternalServerErrorException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 
 class BaseRepository
@@ -19,6 +20,10 @@ class BaseRepository
     {
         try {
             return $callback();
+        } catch (ModelNotFoundException) {
+            throw new ModelNotFoundException(
+                'Could not find a resource.',
+            );
         } catch (CacheException $e) {
             throw new InternalServerErrorException(
                 message: 'Cache error: ' . $e->getMessage()

@@ -11,6 +11,7 @@ use Cache;
 class StatisticsRepository extends BaseRepository implements StatisticsRepositoryInterface
 {
     /**
+     * @return array
      * @throws InternalServerErrorException
      */
     public function getOrderStatistics(): array
@@ -26,15 +27,17 @@ class StatisticsRepository extends BaseRepository implements StatisticsRepositor
             });
 
             return [
-                'total' => (int) $orderStatistics->total,
-                'pending' => (int) $orderStatistics->pending,
-                'completed' => (int) $orderStatistics->completed,
-                'cancelled' => (int) $orderStatistics->cancelled,
+                'total' => (int)$orderStatistics->total,
+                'pending' => (int)$orderStatistics->pending,
+                'completed' => (int)$orderStatistics->completed,
+                'cancelled' => (int)$orderStatistics->cancelled,
             ];
         });
     }
 
+
     /**
+     * @return array
      * @throws InternalServerErrorException
      */
     public function getProductStatistics(): array
@@ -45,7 +48,7 @@ class StatisticsRepository extends BaseRepository implements StatisticsRepositor
             });
 
             return [
-                'total' => (int) $totalProducts,
+                'total' => (int)$totalProducts,
             ];
         });
     }

@@ -5,11 +5,11 @@ namespace App\Services;
 use App\Contracts\Repositories\OrderRepositoryInterface;
 use App\Contracts\Repositories\ProductRepositoryInterface;
 use App\Contracts\Services\OrderServiceInterface;
+use App\DTO\StoreOrderDTO;
 use App\Models\Order;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Throwable;
 
 readonly class OrderService implements OrderServiceInterface
 {
@@ -20,53 +20,59 @@ readonly class OrderService implements OrderServiceInterface
     {
     }
 
-    public function getOrders(): LengthAwarePaginator
+    /**
+     * @return LengthAwarePaginator
+     */
+    public function getOrders(): LengthAwarePaginator // Возвращает ВСЕ заказы
     {
         return $this->orderRepository->all();
     }
 
-    public function getUserOrders(int $userId): Collection
-    {
-        return $this->orderRepository->allUserOrders($userId);
-    }
 
-    public function getOrder(int $userId, int $orderId): Order
+    /**
+     * @param string $orderId
+     * @return Order|null
+     */
+    public function getOrder(string $orderId): ?Order // Возвращает ОДИН закакз по id
     {
-        return $this->orderRepository->getById($userId, $orderId);
+        return $this->orderRepository->getOrder($orderId);
     }
 
     /**
-     * @throws Throwable
+     * @param StoreOrderDTO $DTO
+     * @return Order
      */
-    public function storeOrder(int $userId, array $productsData): Order
+    public function storeOrder(StoreOrderDTO $DTO): Order
     {
-        return DB::transaction((function () use ($userId, $productsData) {
+        return DB::transaction((function () use ($DTO) {
             $productsIds = array_map(function ($item) {
                 return $item['product_id'];
-            }, $productsData);
+            }, $DTO->products);
 
             $products = $this->productRepository->getAllByIds($productsIds);
 
             $totalPrice = 0;
-            foreach ($productsData as $item) {
+            foreach ($DTO->products as $item) {
                 if (isset($products[$item['product_id']])) {
                     $product = $products[$item['product_id']];
                     $totalPrice += $product->price * $item['quantity'];
                 }
             }
 
-            $order = $this->orderRepository->store([
-                'user_id' => $userId,
-                'total_price' => $totalPrice
-            ]);
+            $order = $this->orderRepository->store(
+                new StoreOrderDTO(
+                    userId: $DTO->userId,
+                    totalPrice: $totalPrice,
+                )
+            );
 
 
             $attachData = [];
-            foreach ($productsData as $item) {
+            foreach ($DTO->products as $item) {
                 $product = $products[$item['product_id']];
                 $attachData[$product->id] = [
-                    'quantity' => $item['quantity'],
-                    'total_price' => $product->price,
+                    'quantity'    => $item['quantity'],
+                    'total_price' => $product->price * $item['quantity'],
                 ];
             }
 
@@ -75,7 +81,5 @@ readonly class OrderService implements OrderServiceInterface
 
             return $order;
         }));
-
-
     }
 }

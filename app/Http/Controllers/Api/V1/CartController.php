@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Contracts\Services\CartServiceInterface;
+use App\DTO\AddProductToCartDTO;
+use App\DTO\DestroyProductFromCartDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DestroyProductFromCartRequest;
 use App\Http\Requests\StoreProductToCartRequest;
@@ -36,10 +38,13 @@ class CartController extends Controller
 
     public function store(StoreProductToCartRequest $request): JsonResponse
     {
-        $products = $this->cartService->addProductToCart([
-            'product_id' => $request->input('product_id'),
-            'quantity' => $request->input('quantity'),
-        ], $this->cartKey);
+        $products = $this->cartService->addProductToCart(
+            new AddProductToCartDTO(
+                productId: $request->input('product_id'),
+                quantity: $request->input('quantity'),
+                cartKey: $this->cartKey
+            )
+        );
 
 
         return $this->success(
@@ -53,13 +58,13 @@ class CartController extends Controller
 
     public function destroy(DestroyProductFromCartRequest $request): JsonResponse
     {
-        $productId = $request->input('product_id');
-        $quantity = $request->input('quantity');
-
-        $this->cartService->deleteProductFromCart([
-            'product_id' => $productId,
-            'quantity' => $quantity
-        ], $this->cartKey);
+        $this->cartService->deleteProductFromCart(
+            new DestroyProductFromCartDTO(
+                productId: $request->input('product_id'),
+                quantity: $request->input('quantity'),
+                cartKey: $this->cartKey,
+            )
+        );
 
         return $this->success(
             message: 'Product removed from cart',

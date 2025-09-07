@@ -1,13 +1,10 @@
 <?php
 
 use App\Contracts\Services\LoggerServiceInterface;
-use App\Enums\HttpStatus;
-use App\Exceptions\CacheException;
-use App\Exceptions\InternalServerErrorException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -24,31 +21,54 @@ return Application::configure(basePath: dirname(__DIR__))
             return $request->is('api/*') || $request->expectsJson();
         });
 
+        // Кастомный рендер для API
         $exceptions->renderable(function (Throwable $e, Illuminate\Http\Request $request) {
-            if ($request->is('api/*')) {
-                $status = 500;
-
-                if ($e instanceof HttpExceptionInterface) {
-                    $status = $e->getStatusCode();
-                }
-
-                if ($e instanceof ModelNotFoundException) {
-                    $status = HttpStatus::NOT_FOUND->value;
-                }
-
-                if ($e instanceof InternalServerErrorException || $e instanceof CacheException) {
-                    $status = HttpStatus::INTERNAL_SERVER_ERROR->value;
-                }
-
-                return response()->json([
-                    'error' => $e->getMessage(),
-                    'code' => $status
-                ], $status);
+            if (! $request->is('api/*')) {
+                return null;
             }
+
+            $status = 500;
+            $message = 'Internal server error';
+
+            switch (true) {
+                case $e instanceof Illuminate\Validation\ValidationException:
+                    $status = Response::HTTP_UNPROCESSABLE_ENTITY;
+                    $message = $e->validator->errors()->toArray();
+                    break;
+
+                case $e instanceof Illuminate\Auth\AuthenticationException:
+                    $status = Response::HTTP_UNAUTHORIZED;
+                    $message = 'Unauthenticated';
+                    break;
+
+                case $e instanceof Illuminate\Auth\Access\AuthorizationException:
+                    $status = Response::HTTP_FORBIDDEN;
+                    $message = $e->getMessage() ?: 'Forbidden';
+                    break;
+
+                case $e instanceof Symfony\Component\HttpKernel\Exception\HttpExceptionInterface:
+                    $status = $e->getStatusCode();
+                    $message = $e->getMessage() ?: Response::$statusTexts[$status];
+                    break;
+
+                case $e instanceof Illuminate\Database\Eloquent\ModelNotFoundException:
+                    $status = Response::HTTP_NOT_FOUND;
+                    $message = 'Resource not found';
+                    break;
+
+                default:
+                    break;
+            }
+
+            return response()->json([
+                'error' => $message,
+                'code'  => $status,
+            ], $status);
         });
 
+        // Логирование
         $exceptions->reportable(function (Throwable $e) {
-            Log::error("Exception reported: " . $e->getMessage(), [
+            Log::error('Exception reported: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
 

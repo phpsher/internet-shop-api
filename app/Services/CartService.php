@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Contracts\Repositories\CartRepositoryInterface;
 use App\Contracts\Services\CartServiceInterface;
+use App\DTO\AddProductToCartDTO;
+use App\DTO\DestroyProductFromCartDTO;
 
 readonly class CartService implements CartServiceInterface
 {
@@ -25,34 +27,21 @@ readonly class CartService implements CartServiceInterface
     }
 
     /**
-     * @param array $productsData
-     * @param string $cartKey
+     * @param AddProductToCartDTO $DTO
      * @return array
      */
-    public function addProductToCart(array $productsData, string $cartKey): array
+    public function addProductToCart(AddProductToCartDTO $DTO): array
     {
-        $productId = $productsData['product_id'];
-        $quantity = $productsData['quantity'];
-
-        return $this->cartRepository->store([
-            'product_id' => $productId,
-            'quantity' => $quantity,
-        ], $cartKey);
+        return $this->cartRepository->store($DTO);
     }
 
     /**
-     * @param array $productsData
-     * @param string $cartKey
+     * @param DestroyProductFromCartDTO $DTO
      * @return void
      */
-    public function deleteProductFromCart(array $productsData, string $cartKey): void
+    public function deleteProductFromCart(DestroyProductFromCartDTO $DTO): void
     {
-        $productId = $productsData['product_id'];
-        $quantity = $productsData['quantity'];
 
-        $this->cartRepository->delete([
-            'product_id' => $productId,
-            'quantity' => $quantity,
-        ], $cartKey);
+        $this->cartRepository->delete($DTO);
     }
 }

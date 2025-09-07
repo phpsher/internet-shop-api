@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Contracts\Repositories\OrderRepositoryInterface;
+use App\DTO\StoreOrderDTO;
 use App\Exceptions\CacheException;
 use App\Exceptions\InternalServerErrorException;
 use App\Models\Order;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 {
     /**
+     * @return LengthAwarePaginator
      * @throws InternalServerErrorException
      */
     public function all(): LengthAwarePaginator
@@ -22,57 +24,38 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
                 return Order::paginate(10);
             });
         });
-
     }
 
     /**
-     * @param int $userId
-     * @return Collection
-     * @throws InternalServerErrorException
-     */
-    public function allUserOrders(int $userId): Collection
-    {
-        return $this->safe(function () use ($userId) {
-            return Cache::remember("orders:user:orders:$userId", $this->ttl, function () use ($userId) {
-                return Order::with('products')
-                    ->where('user_id', $userId)
-                    ->get();
-            });
-        });
-    }
-
-    /**
-     * @param int $userId
-     * @param int $orderId
-     * @return Order|null
-     * @throws InternalServerErrorException
-     */
-    public function getById(int $userId, int $orderId): ?Order
-    {
-        return $this->safe(function () use ($userId, $orderId) {
-            return Cache::remember("orders:user:$userId:order:$orderId", $this->ttl, function () use ($userId, $orderId) {
-                return Order::with('products')
-                    ->where('id', $orderId)
-                    ->where('user_id', $userId)
-                    ->first();
-            });
-        });
-    }
-
-    /**
-     * @param array $orderData
+     * @param string $orderId
      * @return Order
      * @throws InternalServerErrorException
      */
-    public function store(array $orderData): Order
+    public function getOrder(string $orderId): Order
     {
-        return $this->safe(function () use ($orderData) {
-            $order = Order::create($orderData);
+        return $this->safe(function () use ($orderId) {
+            return Cache::remember("orders:$orderId", $this->ttl, function () use ($orderId) {
+                return Order::with('products')
+                    ->findOrFail($orderId);
+            });
+        });
+    }
 
+    /**
+     * @param StoreOrderDTO $DTO
+     * @return Order
+     * @throws InternalServerErrorException
+     */
+    public function store(StoreOrderDTO $DTO): Order
+    {
+        return $this->safe(function () use ($DTO) {
+            $order = Order::create($DTO->toArray());
 
-            if(!Cache::put("order:$order->id", $order, $this->ttl)) {
+            if (!Cache::put("order:$order->id", $order, $this->ttl)) {
                 throw new CacheException('Error storing order in cache');
             }
+
+            Cache::forget('orders:all');
 
             return $order;
         });

@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\Contracts\Repositories\CartRepositoryInterface;
+use App\DTO\AddProductToCartDTO;
+use App\DTO\DestroyProductFromCartDTO;
 use App\Exceptions\CacheException;
 use App\Exceptions\InternalServerErrorException;
 use Illuminate\Support\Facades\Cache;
@@ -22,17 +24,17 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
     }
 
     /**
-     * @param array $cartData
-     * @param string $cartKey
+     * @param AddProductToCartDTO $DTO
      * @return array
-     * @throws CacheException|InternalServerErrorException
+     * @throws InternalServerErrorException
      */
-    public function store(array $cartData, string $cartKey): array
+    public function store(AddProductToCartDTO $DTO): array
     {
-        $productId = $cartData['product_id'];
-        $quantity = $cartData['quantity'];
+        return $this->safe(function () use ($DTO) {
+            $cartKey = $DTO->cartKey;
+            $productId = $DTO->productId;
+            $quantity = (int) $DTO->quantity;
 
-        return $this->safe(function () use ($cartKey, $productId, $quantity) {
             $cart = Cache::get($cartKey, []);
 
             if (isset($cart[$productId])) {
@@ -42,31 +44,29 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
             }
 
             if (!Cache::put($cartKey, $cart, $this->ttl)) {
-                throw new CacheException();
+                throw new CacheException('Failed to store cart in cache');
             }
 
             return $this->formatCart($cart);
         });
     }
 
+
     /**
-     * @param array $cartData
-     * @param string $cartKey
+     * @param DestroyProductFromCartDTO $DTO
      * @return void
-     * @throws CacheException|InternalServerErrorException
+     * @throws InternalServerErrorException
      */
-    public function delete(array $cartData, string $cartKey): void
+    public function delete(DestroyProductFromCartDTO $DTO): void
     {
-        $productId = $cartData['product_id'];
+        $this->safe(function () use ($DTO) {
+            $cart = Cache::get($DTO->cartKey, []);
 
-        $this->safe(function () use ($cartKey, $productId) {
-            $cart = Cache::get($cartKey, []);
-
-            if (isset($cart[$productId])) {
-                unset($cart[$productId]);
+            if (isset($cart[$DTO->productId])) {
+                unset($cart[$DTO->productId]);
             }
 
-            if (!Cache::put($cartKey, $cart, $this->ttl)) {
+            if (!Cache::put($DTO->cartKey, $cart, $this->ttl)) {
                 throw new CacheException('Error deleting product from cart');
             }
         });

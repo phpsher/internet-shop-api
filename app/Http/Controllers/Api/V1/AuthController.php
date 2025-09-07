@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Contracts\Services\AuthServiceInterface;
+use App\DTO\LoginUserDTO;
+use App\DTO\RegisterUserDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginUserRequest;
 use App\Http\Requests\RegisterUserRequest;
@@ -22,7 +24,13 @@ class AuthController extends Controller
 
     public function register(RegisterUserRequest $request): JsonResponse
     {
-        $user = $this->authService->register($request->validated());
+        $user = $this->authService->register(
+            new RegisterUserDTO(
+                name: $request->input('name'),
+                email: $request->input('email'),
+                password: $request->input('password'),
+            )
+        );
 
 
         return $this->success(
@@ -36,7 +44,12 @@ class AuthController extends Controller
 
     public function login(LoginUserRequest $request): JsonResponse
     {
-        $user = $this->authService->login($request->validated());
+        $user = $this->authService->login(
+            new LoginUserDTO(
+                email: $request->input('email'),
+                password: $request->input('password')
+            )
+        );
 
         return $this->success(
             message: 'Successfully login',

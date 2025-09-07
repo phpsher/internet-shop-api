@@ -6,23 +6,24 @@ use App\Contracts\Repositories\ProductRepositoryInterface;
 use App\Exceptions\InternalServerErrorException;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 
 
 class ProductRepository extends BaseRepository implements ProductRepositoryInterface
 {
     /**
-     * @return Collection
+     * @return LengthAwarePaginator
      * @throws InternalServerErrorException
      */
-    public function all(): Collection
+    public function all(): LengthAwarePaginator
     {
         return $this->safe(function () {
             return Cache::remember(
                 'products:all',
                 $this->ttl,
                 function () {
-                    return Product::all();
+                    return Product::paginate(10);
                 });
         });
     }
@@ -39,7 +40,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
                 "product:" . $productId,
                 $this->ttl,
                 function () use ($productId) {
-                    return Product::find($productId);
+                    return Product::findOrFail($productId);
                 });
         });
     }

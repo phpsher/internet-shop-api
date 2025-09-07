@@ -29,7 +29,9 @@ class ProductControllerTest extends TestCase
 
     public function test_can_get_all_products()
     {
-        Product::factory()->count(5)->create();
+        Product::factory()
+            ->count(5)
+            ->create();
 
         $response = $this->getJson('/api/v1/products');
 
@@ -69,5 +71,11 @@ class ProductControllerTest extends TestCase
                 'updated_at',
             ]
         ]);
+    }
+
+    public function test_returns_404_if_product_is_not_found()
+    {
+        $this->getJson("/api/v1/products/999")
+            ->assertNotFound();
     }
 }

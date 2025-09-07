@@ -2,6 +2,7 @@
 
 namespace App\Contracts\Repositories;
 
+use App\DTO\StoreOrderDTO;
 use App\Models\Order;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -9,9 +10,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 interface OrderRepositoryInterface
 {
     public function all(): LengthAwarePaginator;
-    public function allUserOrders(int $userId): Collection;
-
-    public function getById(int $userId, int $orderId): ?Order;
-
-    public function store(array $orderData): Order;
+    public function getOrder(string $orderId): ?Order;
+    public function store(StoreOrderDTO $DTO): Order;
 }

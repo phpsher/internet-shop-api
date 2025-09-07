@@ -4,9 +4,10 @@ namespace App\Services;
 
 use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Contracts\Services\AuthServiceInterface;
-use App\Exceptions\InternalServerErrorException;
+use App\DTO\LoginUserDTO;
+use App\DTO\RegisterUserDTO;
 use App\Exceptions\InvalidCredentialsException;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 readonly class AuthService implements AuthServiceInterface
@@ -18,12 +19,12 @@ readonly class AuthService implements AuthServiceInterface
     }
 
     /**
-     * @param array $userData
+     * @param RegisterUserDTO $DTO
      * @return array
      */
-    public function register(array $userData): array
+    public function register(RegisterUserDTO $DTO): array
     {
-        $user = $this->userRepository->store($userData);
+        $user = $this->userRepository->store($DTO);
         $token = $user->createToken('token')->plainTextToken;
 
 
@@ -34,12 +35,16 @@ readonly class AuthService implements AuthServiceInterface
     }
 
     /**
-     * @param array $credentials
+     * @param LoginUserDTO $DTO
      * @return array
      */
-    public function login(array $credentials): array
+    public function login(LoginUserDTO $DTO): array
     {
-        $user = $this->userRepository->findByEmail($credentials['email']);
+        $user = $this->userRepository->findByEmail($DTO->email);
+
+        if (!$user || !Hash::check($DTO->password, $user->password)) {
+            throw new InvalidCredentialsException('Invalid email or password.');
+        }
 
         $token = $user->createToken('token')->plainTextToken;
 
